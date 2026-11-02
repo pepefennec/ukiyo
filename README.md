@@ -20,6 +20,7 @@ Después abre `http://localhost:8000/` en un navegador moderno. Es necesario usa
 index.html
 assets/
   css/styles.css
+  icons/favicon.svg
   js/
     app.js
     data.js
