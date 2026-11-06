@@ -44,12 +44,22 @@ export function selectRecommendation(ranked,checkin={},variation=0){
   const maximum=available<=20?1:available<=45?2:available<=90?3:4;
   const best=ranked[0].score;
   const close=ranked.filter(result=>result.score>=best-3).slice(0,8);
-  const primary=close[(checkinHash(checkin)+variation)%close.length];
+  const closeFitting=close.filter(result=>(Number(result.entry.duration)||30)<=available);
+  const anyFitting=ranked.filter(result=>(Number(result.entry.duration)||30)<=available).slice(0,8);
+  const primaryPool=closeFitting.length?closeFitting:anyFitting.length?anyFitting:close;
+  const primary=primaryPool[(checkinHash(checkin)+variation)%primaryPool.length];
   if(primary.entry.kind==='ritual')return [primary];
 
   const selected=[primary];
   let suggested=Number(primary.entry.duration)||30;
   const remaining=ranked.filter(result=>result!==primary);
+  if(available>=60&&primary.entry.subtype!=='autocuidado'){
+    const compatibleCare=remaining.filter(result=>result.entry.subtype==='autocuidado'&&suggested+(Number(result.entry.duration)||10)<=available);
+    const bestCare=compatibleCare[0]?.score;
+    const carePool=compatibleCare.filter(result=>result.score>=bestCare-3).slice(0,8);
+    const selfCare=carePool[(checkinHash(checkin)+variation)%carePool.length];
+    if(selfCare){selected.push(selfCare);suggested+=Number(selfCare.entry.duration)||10}
+  }
   while(selected.length<maximum){
     const next=remaining.find(result=>{
       if(selected.includes(result))return false;
