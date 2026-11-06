@@ -1,22 +1,26 @@
-export const DEFAULT_ACTIVITIES = [
-  {id:1,name:'Escuchar música',category:'Desconexión',duration:'15–30 min',energy:'Baja',icon:'♫',status:'Pendiente',type:'Recurrente',description:'Pon algo que te guste y deja que el momento fluya.',url:'',image:''},
-  {id:2,name:'Dibujar un rato',category:'Creatividad',duration:'Flexible',energy:'Media',icon:'✎',status:'Pendiente',type:'Recurrente',description:'Crear sin preocuparte por el resultado.',url:'',image:''},
-  {id:3,name:'Leer',category:'Tranquilidad',duration:'15–30 min',energy:'Baja',icon:'▤',status:'Pendiente',type:'Recurrente',description:'Leer unas páginas sin prisa.',url:'',image:''},
-  {id:4,name:'Salir a caminar',category:'Exploración',duration:'30–60 min',energy:'Media',icon:'↗',status:'Pendiente',type:'Recurrente',description:'Cambiar de ambiente y recorrer un lugar.',url:'',image:''},
-  {id:5,name:'Ver una película',category:'Entretenimiento',duration:'1–2 h',energy:'Baja',icon:'▣',status:'Pendiente',type:'Experiencia',description:'Una película que tenías ganas de ver.',url:'',image:''}
+import {SEED_ENTRIES,TAG_TAXONOMY} from './catalogue.js';
+
+export const SCHEMA_VERSION = 3;
+export const CATALOGUE_VERSION = 'b3-definitive-1';
+export const FAMILIES = TAG_TAXONOMY.category;
+
+const ICONS={ritual:'leaf',libro:'book',pelicula:'film',serie:'film',videojuego:'gamepad',album:'headphones',pasatiempo:'leaf',proyecto:'code',actividad:'pencil'};
+const label=value=>value==='muy-baja'?'Muy baja':value.charAt(0).toUpperCase()+value.slice(1);
+
+export const CATALOG = SEED_ENTRIES.map(entry=>({
+  ...entry,
+  family:entry.category,
+  duration:entry.estimated_minutes,
+  energy:label(entry.energy),
+  description:entry.summary,
+  instructions:entry.steps?.[0]?.guidance||entry.summary,
+  icon:ICONS[entry.subtype]||ICONS[entry.kind]||'leaf',
+  catalogueVersion:CATALOGUE_VERSION
+}));
+
+export const PLAN_TEMPLATES = [
+  {id:'tpl-solo',title:'Un día para mí',company:'Solo',days:1},
+  {id:'tpl-pareja',title:'Fin de semana juntos',company:'Pareja',days:2},
+  {id:'tpl-amigos',title:'Tres días con amigos',company:'Amigos',days:3},
+  {id:'tpl-familia',title:'Una semana en familia',company:'Familia',days:7}
 ];
-
-export const MOOD_OPTIONS = [['agobiado','😮‍💨','Agobiado'],['bajo','😔','Bajo de ánimo'],['neutral','😐','Neutral'],['tranquilo','😌','Tranquilo'],['animado','😊','Animado']];
-export const ENERGY_OPTIONS = ['Baja','Media','Alta','Variable'];
-export const TIME_OPTIONS = ['15 minutos','30 minutos','1 hora','1–2 horas','Flexible'];
-export const INTENTIONS = [['Desconectar','☁'],['Crear','✎'],['Explorar','⌖'],['Tranquilizarme','☕'],['Entretenerme','▣'],['Lo que surja','✧']];
-export const CATEGORIES = ['Desconexión','Creatividad','Exploración','Tranquilidad','Entretenimiento'];
-export const DURATION_OPTIONS = ['5–15 min','15–30 min','30–60 min','1–2 h','Más de 2 h','Flexible'];
-
-export const iconFor = category => ({
-  'Desconexión':'☁',
-  'Creatividad':'✎',
-  'Exploración':'⌖',
-  'Tranquilidad':'☕',
-  'Entretenimiento':'▣'
-}[category] || '✧');

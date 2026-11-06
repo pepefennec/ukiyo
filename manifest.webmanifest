@@ -1,0 +1,9 @@
+{
+  "name": "Ukiyo — Tiempo libre consciente",
+  "short_name": "Ukiyo",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F6EFE5",
+  "theme_color": "#C44E43",
+  "icons": [{"src":"./assets/icons/favicon.svg","sizes":"any","type":"image/svg+xml"}]
+}
