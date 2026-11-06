@@ -1,5 +1,5 @@
 import {FAMILIES} from './data.js';
-import {recommendEntries,recommendationExplanation} from './recommendations.js';
+import {recommendEntries,recommendationExplanation,selectRecommendation} from './recommendations.js';
 import {state,uid,update,replaceState} from './state.js';
 
 const $=(selector,root=document)=>root.querySelector(selector);
@@ -65,13 +65,14 @@ function proposalFrom(checkin={}){
   const personalizedSources=new Set(state.library.map(item=>item.sourceId).filter(Boolean));
   const candidates=[...state.catalog.filter(item=>!personalizedSources.has(item.id)),...state.library];
   const ranked=recommendEntries(candidates,checkin,recentIds);
-  const chosen=ranked[0];
-  const item=chosen.entry;
-  const cap=Number(checkin.time)||item.duration;
-  const sourceSteps=item.kind==='ritual'&&item.steps?.length?item.steps:[{title:item.title,minutes:item.duration,guidance:item.instructions}];
-  let used=0;
-  const steps=sourceSteps.map(step=>{const minutes=Math.max(1,Math.min(Number(step.minutes)||10,Math.max(5,cap-used)));used+=minutes;return {id:uid('step'),itemId:item.id,inline:{title:step.title,description:step.guidance,instructions:step.guidance,icon:item.icon},minutes}}).filter((step,index)=>index===0||used<=cap+15);
-  update(s=>{s.ritualDraft={id:uid('draft'),title:item.title,sourceId:item.id,reason:recommendationExplanation(chosen),checkin,steps}});
+  const variation=Number(state.settings.recommendationOffset)||0;
+  const selected=selectRecommendation(ranked,checkin,variation);
+  const steps=selected.flatMap(({entry:item})=>item.kind==='ritual'&&item.steps?.length
+    ?item.steps.map(step=>({id:uid('step'),itemId:item.id,inline:{title:step.title,description:step.guidance,instructions:step.guidance,icon:item.icon},minutes:Number(step.minutes)||10}))
+    :[{id:uid('step'),itemId:item.id,minutes:Number(item.duration)||30}]);
+  const reasons=[...new Set(selected.flatMap(result=>result.reasons))];
+  const title=selected.length===1?selected[0].entry.title:'Una pausa a tu medida';
+  update(s=>{s.settings.recommendationOffset=variation+1;s.ritualDraft={id:uid('draft'),title,sourceIds:selected.map(result=>result.entry.id),reason:reasons.join(' · ')||recommendationExplanation(selected[0]),checkin,steps}});
   route('ritual');
 }
 function renderRitual(){
@@ -84,10 +85,10 @@ function renderRitual(){
 function timing(step){return (step.elapsed||0)+(step.running&&step.startedAt?Math.max(0,Math.floor((Date.now()-step.startedAt)/1000)):0)}
 function renderActiveRitual(){
   const ritual=state.activeRitual,index=ritual.index,step=ritual.steps[index];
-  if(ritual.phase==='transition'){const next=ritual.steps[index];return `<section class="screen ritual-page"><div class="ritual-center"><p class="eyebrow">A tu ritmo</p><h1>La siguiente actividad está lista.</h1><h2>${esc((next.inline||itemById(next.itemId))?.title)}</h2><p>${next.minutes} minutos sugeridos. Puedes terminar aquí si ya fue suficiente.</p><div class="actions center">${button('Continuar con la siguiente','continue-ritual')}${button('Terminar mi ritual aquí','close-ritual','secondary')}</div></div></section>`}
+  if(ritual.phase==='transition'){const next=ritual.steps[index];return `<section class="screen ritual-page"><div class="ritual-center"><p class="eyebrow">A tu ritmo</p><h1>La siguiente actividad está lista.</h1><h2>${esc((next.inline||itemById(next.itemId))?.title)}</h2><p>${next.minutes} minutos sugeridos. Puedes terminar aquí si ya fue suficiente.</p><div class="actions center">${button('Continuar con la siguiente','continue-ritual')}${button('Saltar esta actividad','skip-step','quiet')}${button('Terminar mi ritual aquí','close-ritual','secondary')}</div></div></section>`}
   const item=step.inline||itemById(step.itemId),elapsed=timing(step),target=step.minutes*60,remaining=Math.max(0,target-elapsed),ended=remaining===0&&!step.free;
   if(ended&&step.running)update(s=>{const x=s.activeRitual.steps[s.activeRitual.index];x.elapsed=timing(x);x.running=false;x.startedAt=null;x.timeEnded=true});
-  return `<section class="screen ritual-page"><button class="text-button" data-action="exit-active">× Salir del ritual</button><div class="activity-focus"><p class="eyebrow">Actividad ${index+1} de ${ritual.steps.length}</p><span class="focus-icon">${icon(item.icon)}</span><h1>${esc(item.title)}</h1><p>${esc(item.instructions)}</p><div class="timer"><small>${step.free?'TIEMPO ACTIVO':'TIEMPO RESTANTE'}</small><strong id="timer-value">${formatSeconds(step.free?elapsed:remaining)}</strong></div><div class="actions center">${button(step.running?'Pausar':'Reanudar','toggle-timer',step.running?'secondary':'primary')}${button('Terminar actividad','finish-step','quiet')}</div>${(ended||step.timeEnded)?`<div class="time-options card"><h3>Terminó el tiempo sugerido</h3><p>Tú decides cómo continuar.</p><div class="actions center"><button class="btn secondary" data-action="extend" data-minutes="5">+5 min</button><button class="btn secondary" data-action="extend" data-minutes="10">+10 min</button><button class="btn secondary" data-action="extend" data-minutes="15">+15 min</button>${button('Continuar libremente','free-mode','quiet')}${button('Terminar','finish-step')}</div></div>`:''}</div></section>`;
+  return `<section class="screen ritual-page"><button class="text-button" data-action="exit-active">× Salir del ritual</button><div class="activity-focus"><p class="eyebrow">Actividad ${index+1} de ${ritual.steps.length}</p><span class="focus-icon">${icon(item.icon)}</span><h1>${esc(item.title)}</h1><p>${esc(item.instructions)}</p><div class="timer"><small>${step.free?'TIEMPO ACTIVO':'TIEMPO RESTANTE'}</small><strong id="timer-value">${formatSeconds(step.free?elapsed:remaining)}</strong></div><div class="actions center">${button(step.running?'Pausar':'Reanudar','toggle-timer',step.running?'secondary':'primary')}${button('Terminar actividad','finish-step','quiet')}${button('Saltar','skip-step','quiet')}</div>${(ended||step.timeEnded)?`<div class="time-options card"><h3>Terminó el tiempo sugerido</h3><p>Tú decides cómo continuar.</p><div class="actions center"><button class="btn secondary" data-action="extend" data-minutes="5">+5 min</button><button class="btn secondary" data-action="extend" data-minutes="10">+10 min</button><button class="btn secondary" data-action="extend" data-minutes="15">+15 min</button>${button('Continuar libremente','free-mode','quiet')}${button('Terminar','finish-step')}</div></div>`:''}</div></section>`;
 }
 function formatSeconds(value){value=Math.max(0,Math.floor(value));return String(Math.floor(value/60)).padStart(2,'0')+':'+String(value%60).padStart(2,'0')}
 
@@ -144,6 +145,7 @@ function handleAction(action,target){
   if(action==='extend'){update(s=>{const x=s.activeRitual.steps[s.activeRitual.index];x.minutes+=Number(target.dataset.minutes);x.timeEnded=false;x.startedAt=Date.now();x.running=true});return render()}
   if(action==='free-mode'){update(s=>{const x=s.activeRitual.steps[s.activeRitual.index];x.free=true;x.timeEnded=false;x.startedAt=Date.now();x.running=true});return render()}
   if(action==='finish-step'){update(s=>{const r=s.activeRitual,x=r.steps[r.index];x.elapsed=timing(x);x.actualSeconds=x.elapsed;x.running=false;x.status='completed';r.index+=1;if(r.index>=r.steps.length)r.phase='closing';else r.phase='transition'});if(state.activeRitual.phase==='closing')return closeRitual();return render()}
+  if(action==='skip-step'){update(s=>{const r=s.activeRitual,x=r.steps[r.index];x.elapsed=timing(x);x.actualSeconds=x.elapsed;x.running=false;x.status='skipped';r.index+=1;if(r.index>=r.steps.length)r.phase='closing';else r.phase='transition'});if(state.activeRitual.phase==='closing')return closeRitual();return render()}
   if(action==='continue-ritual'){update(s=>{const r=s.activeRitual,x=r.steps[r.index];x.status='active';x.running=true;x.startedAt=Date.now();r.phase='running'});return render()}
   if(action==='close-ritual')return closeRitual();
   if(action==='exit-active'){if(confirm('¿Terminar el ritual aquí? Se guardará lo que ya disfrutaste.'))return closeRitual()}

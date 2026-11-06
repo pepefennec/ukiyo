@@ -32,3 +32,35 @@ export function recommendEntries(entries,checkin={},recentIds=[]){
 }
 
 export function recommendationExplanation(result){return result.reasons.length?result.reasons.join(' · '):'propuesta flexible del catálogo'}
+
+function checkinHash(checkin){
+  return [...`${normalize(checkin.mood)}|${normalize(checkin.energy)}|${normalize(checkin.intent)}|${checkin.time||''}`]
+    .reduce((total,char)=>((total*31)+char.charCodeAt(0))>>>0,0);
+}
+
+export function selectRecommendation(ranked,checkin={},variation=0){
+  if(!ranked.length)return [];
+  const available=Number(checkin.time)||60;
+  const maximum=available<=20?1:available<=45?2:available<=90?3:4;
+  const best=ranked[0].score;
+  const close=ranked.filter(result=>result.score>=best-3).slice(0,8);
+  const primary=close[(checkinHash(checkin)+variation)%close.length];
+  if(primary.entry.kind==='ritual')return [primary];
+
+  const selected=[primary];
+  let suggested=Number(primary.entry.duration)||30;
+  const remaining=ranked.filter(result=>result!==primary);
+  while(selected.length<maximum){
+    const next=remaining.find(result=>{
+      if(selected.includes(result))return false;
+      const duration=Number(result.entry.duration)||30;
+      if(suggested+duration>available)return false;
+      const sameSubtype=selected.some(item=>item.entry.subtype&&item.entry.subtype===result.entry.subtype);
+      return !sameSubtype&&result.entry.kind!=='ritual';
+    });
+    if(!next)break;
+    selected.push(next);
+    suggested+=Number(next.entry.duration)||30;
+  }
+  return selected;
+}
