@@ -16,9 +16,10 @@ Este primer corte funcional incorpora:
 
 - cinco módulos: Inicio, Explorar, Planes, Memorias y Mi espacio;
 - Inicio para día ocupado o libre;
-- catálogo precargado y biblioteca personal;
+- catálogo definitivo de 19 semillas y biblioteca personal editable;
+- fichas con pasos, materiales, avisos, intenciones y etiquetas;
 - búsqueda, familias, favoritos e intereses;
-- check-in opcional y propuesta ritual editable;
+- check-in opcional y propuesta ritual editable mediante reglas locales explicables;
 - ritual secuencial con pausa, extensiones, continuación libre y cierre factual;
 - recuperación del ritual después de recargar;
 - planes con fecha opcional y cuatro plantillas;
@@ -31,7 +32,9 @@ Este primer corte funcional incorpora:
 
 ## Arquitectura
 
-- `assets/js/data.js`: catálogo y plantillas semilla.
+- `assets/js/catalogue.js`: las 19 definiciones semilla proporcionadas para B3.
+- `assets/js/data.js`: adaptación del catálogo al modelo de interfaz y plantillas.
+- `assets/js/recommendations.js`: reglas locales de energía, estado, intención, tiempo y recencia.
 - `assets/js/state.js`: esquema B3, estado y migración V2.
 - `assets/js/storage.js`: persistencia IndexedDB.
 - `assets/js/ui.js`: pantallas e interacciones de este corte.
@@ -50,7 +53,7 @@ B3 usa la paleta terracota y crema confirmada, tipografías del sistema e iconos
 - filtros combinables avanzados y asignación de elementos a colecciones;
 - detalle y edición completa de álbumes, proyectos y memorias;
 - excepciones y pausas del calendario personal;
-- reglas de recencia del recomendador;
+- ajuste de pesos y política avanzada de repetición del recomendador;
 - tratamiento completo de adjuntos e imágenes en respaldos;
 - pruebas permanentes y validación en dispositivos físicos.
 

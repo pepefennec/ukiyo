@@ -1,39 +1,34 @@
-function timeFits(activity, availableTime) {
-  if (availableTime === 'Flexible' || activity.duration === 'Flexible') return true;
-  const durationRank = {'5–15 min':1,'15–30 min':2,'30–60 min':3,'1–2 h':4,'Más de 2 h':5};
-  const timeRank = {'15 minutos':1,'30 minutos':2,'1 hora':3,'1–2 horas':4,'Flexible':5};
-  return (durationRank[activity.duration] || 3) <= (timeRank[availableTime] || 3) + 1;
-}
+const normalize=value=>String(value||'').trim().toLowerCase();
+const energyRank={'muy baja':0,baja:1,media:2,alta:3};
+const moodIntentions={agotado:['descansar','calma','desconectar'],neutral:['calma','disfrutar','curiosidad'],animado:['disfrutar','crear','explorar','curiosidad']};
 
-function energyFits(activity, energy) {
-  if (energy === 'Baja') return activity.energy === 'Baja' || activity.energy === 'Variable';
-  if (energy === 'Media') return activity.energy !== 'Alta';
-  return true;
-}
-
-function intentionFits(activity, intention) {
-  switch (intention) {
-    case 'Crear': return activity.category === 'Creatividad';
-    case 'Explorar': return activity.category === 'Exploración';
-    case 'Tranquilizarme': return activity.category === 'Tranquilidad' || activity.energy === 'Baja';
-    case 'Entretenerme': return activity.category === 'Entretenimiento';
-    case 'Desconectar': return ['Desconexión','Tranquilidad','Entretenimiento'].includes(activity.category);
-    default: return true;
+function scoreEntry(entry,checkin,recentIds=[]){
+  let score=0;
+  const reasons=[];
+  const wantedEnergy=normalize(checkin.energy);
+  const entryEnergy=normalize(entry.energy);
+  if(wantedEnergy){
+    if(entryEnergy===wantedEnergy){score+=6;reasons.push(`energía ${wantedEnergy}`)}
+    else if(entryEnergy!=='variable'&&energyRank[entryEnergy]<=energyRank[wantedEnergy]){score+=3;reasons.push('energía compatible')}
+    else if(entryEnergy!=='variable')score-=5;
   }
+  const intention=normalize(checkin.intent);
+  if(intention&&entry.intentions?.includes(intention)){score+=7;reasons.push(`intención: ${intention}`)}
+  const mood=normalize(checkin.mood);
+  const moodMatches=(moodIntentions[mood]||[]).filter(value=>entry.intentions?.includes(value));
+  if(moodMatches.length){score+=Math.min(4,moodMatches.length*2);reasons.push(`estado: ${moodMatches[0]}`)}
+  const available=Number(checkin.time);
+  if(available){
+    if(entry.duration<=available){score+=4;reasons.push(`cabe en ${available} min`)}
+    else if(entry.tags?.includes('continuable')){score+=1;reasons.push('puede continuarse después')}
+    else score-=4;
+  }
+  if(recentIds.includes(entry.id))score-=3;
+  return {entry,score,reasons};
 }
 
-export function getRecommendations(activities, preferences, offset = 0) {
-  const activeActivities = activities.filter(activity => activity.status !== 'Archivada');
-  return activities
-    .filter(activity => activity.status !== 'Archivada')
-    .map((activity, index) => ({
-      ...activity,
-      recommendationOrder: (index - offset + activeActivities.length) % activeActivities.length,
-      score:
-        (intentionFits(activity, preferences.intention) ? 4 : 0) +
-        (timeFits(activity, preferences.time) ? 2 : 0) +
-        (energyFits(activity, preferences.energy) ? 2 : 0)
-    }))
-    .sort((a, b) => b.score - a.score || a.recommendationOrder - b.recommendationOrder)
-    .slice(0, 3);
+export function recommendEntries(entries,checkin={},recentIds=[]){
+  return entries.map(entry=>scoreEntry(entry,checkin,recentIds)).sort((a,b)=>b.score-a.score||a.entry.id.localeCompare(b.entry.id));
 }
+
+export function recommendationExplanation(result){return result.reasons.length?result.reasons.join(' · '):'propuesta flexible del catálogo'}
