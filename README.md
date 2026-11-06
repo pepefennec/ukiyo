@@ -16,7 +16,7 @@ Este primer corte funcional incorpora:
 
 - cinco módulos: Inicio, Explorar, Planes, Memorias y Mi espacio;
 - Inicio para día ocupado o libre;
-- catálogo definitivo de 19 semillas y biblioteca personal editable;
+- catálogo definitivo de 19 semillas, actividades de autocuidado derivadas y biblioteca personal editable;
 - fichas con pasos, materiales, avisos, intenciones y etiquetas;
 - búsqueda, familias, favoritos e intereses;
 - check-in opcional y propuesta ritual editable mediante reglas locales explicables;

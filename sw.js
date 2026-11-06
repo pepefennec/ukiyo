@@ -1,4 +1,4 @@
-const CACHE='ukiyo-b3-shell-v3';
+const CACHE='ukiyo-b3-shell-v4';
 const SHELL=['./','./index.html','./assets/css/styles.css','./assets/js/app.js','./assets/js/catalogue.js','./assets/js/data.js','./assets/js/recommendations.js','./assets/js/state.js','./assets/js/storage.js','./assets/js/ui.js','./assets/icons/favicon.svg','./manifest.webmanifest'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
