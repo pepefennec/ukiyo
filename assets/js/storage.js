@@ -1,0 +1,4 @@
+const DATABASE='ukiyo-b3', STORE='app', STATE_KEY='state';
+function openDatabase(){return new Promise((resolve,reject)=>{const request=indexedDB.open(DATABASE,1);request.onupgradeneeded=()=>request.result.createObjectStore(STORE);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
+export async function loadState(){const database=await openDatabase();return new Promise((resolve,reject)=>{const request=database.transaction(STORE,'readonly').objectStore(STORE).get(STATE_KEY);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error)})}
+export async function saveState(state){const database=await openDatabase();return new Promise((resolve,reject)=>{const transaction=database.transaction(STORE,'readwrite');transaction.objectStore(STORE).put(structuredClone(state),STATE_KEY);transaction.oncomplete=()=>resolve();transaction.onerror=()=>reject(transaction.error)})}

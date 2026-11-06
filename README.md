@@ -1,59 +1,66 @@
-# Ukiyo
+# Ukiyo B3
 
-Aplicación web personal para desconexión, descanso y recuperación después de la jornada laboral.
-
-Ukiyo V1 es una aplicación estática construida con HTML, CSS y módulos ES nativos. No necesita instalar paquetes, compilar recursos ni configurar servicios externos. El archivo `ukiyo_prototipo.html` se conserva como referencia del prototipo original.
+Aplicación web local-first para disfrutar el tiempo libre de forma consciente, sin rachas, puntuaciones ni presión productiva.
 
 ## Ejecutar en local
-
-Desde la raíz del repositorio:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Después abre `http://localhost:8000/` en un navegador moderno. Es necesario usar un servidor HTTP porque la aplicación carga módulos ES.
+Abre `http://localhost:8000/`. La primera visita guarda el shell para que las siguientes puedan funcionar sin conexión.
 
-## Estructura
+## Estado de B3
 
-```text
-index.html
-assets/
-  css/styles.css
-  icons/favicon.svg
-  js/
-    app.js
-    data.js
-    recommendations.js
-    state.js
-    ui.js
-ukiyo_prototipo.html
-```
+Este primer corte funcional incorpora:
 
-- `data.js`: catálogo inicial y opciones de la interfaz.
-- `state.js`: estado temporal de la aplicación.
-- `recommendations.js`: reglas de recomendación.
-- `ui.js`: renderizado, navegación y eventos.
-- `app.js`: punto de entrada.
+- cinco módulos: Inicio, Explorar, Planes, Memorias y Mi espacio;
+- Inicio para día ocupado o libre;
+- catálogo precargado y biblioteca personal;
+- búsqueda, familias, favoritos e intereses;
+- check-in opcional y propuesta ritual editable;
+- ritual secuencial con pausa, extensiones, continuación libre y cierre factual;
+- recuperación del ritual después de recargar;
+- planes con fecha opcional y cuatro plantillas;
+- memorias espontáneas, sesiones, destacados y álbumes básicos;
+- proyectos y colecciones básicos;
+- persistencia con IndexedDB;
+- migración automática de datos del prototipo V2 cuando están en el mismo origen;
+- respaldo y restauración JSON;
+- service worker y manifiesto instalable.
 
-## Estado de los datos
+## Arquitectura
 
-Esta etapa mantiene los datos únicamente en memoria. Las actividades, imágenes, notas, sesiones e historial se reinician al recargar o cerrar la página. La persistencia local con IndexedDB pertenece a la Etapa 2 y todavía no está implementada.
+- `assets/js/data.js`: catálogo y plantillas semilla.
+- `assets/js/state.js`: esquema B3, estado y migración V2.
+- `assets/js/storage.js`: persistencia IndexedDB.
+- `assets/js/ui.js`: pantallas e interacciones de este corte.
+- `assets/css/styles.css`: tokens y componentes provisionales.
+- `sw.js`: shell offline.
 
-## Validación de la Etapa 1
+Los prototipos anteriores permanecen como referencia y no forman parte del punto de entrada publicado.
 
-Se verificó con Chromium en modo headless:
+## Alcance visual
 
-- carga mediante servidor estático y módulos sin recursos fallidos;
-- navegación y recomendaciones;
-- creación de actividades y validación de enlaces HTTP/HTTPS;
-- archivo y restauración sin duplicados;
-- inicio, pausa, reanudación y finalización de sesiones;
-- registro de notas e historial;
-- resumen limitado al mes actual;
-- ausencia de desbordamiento horizontal a 390 px;
-- ausencia de errores JavaScript durante el recorrido.
+B3 usa la paleta terracota y crema confirmada, tipografías del sistema e iconos provisionales. Fraunces, Montserrat, Lucide, logotipo, ilustraciones, tema oscuro definitivo y pulido de identidad se reservan para B4.
 
-También se comprobó la sintaxis de todos los módulos con `node --check`.
+## Pendiente dentro de B3
 
-No se ejecutaron pruebas en dispositivos físicos, Safari/iOS ni Firefox. El repositorio aún no incluye una suite automatizada persistente; el recorrido anterior se ejecutó como prueba funcional durante la implementación.
+- editor visual completo del itinerario por días;
+- filtros combinables avanzados y asignación de elementos a colecciones;
+- detalle y edición completa de álbumes, proyectos y memorias;
+- excepciones y pausas del calendario personal;
+- reglas de recencia del recomendador;
+- tratamiento completo de adjuntos e imágenes en respaldos;
+- pruebas permanentes y validación en dispositivos físicos.
+
+## Validación realizada
+
+- sintaxis de módulos y manifiesto;
+- navegación por cinco módulos;
+- catálogo, copia personal y persistencia tras recarga;
+- ritual, pausa, recuperación y cierre;
+- respaldo descargable;
+- migración V2 de biblioteca y memorias;
+- recarga sin conexión mediante service worker;
+- viewport móvil de 390 px sin desbordamiento horizontal.
